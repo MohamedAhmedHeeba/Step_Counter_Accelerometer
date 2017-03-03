@@ -22,7 +22,7 @@
         android:text="#Steps: "
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/steps"
+        android:id="@+id/Steps"
         android:layout_marginTop="83dp"
         android:layout_below="@+id/Acceleration"
         android:layout_alignParentLeft="true"
