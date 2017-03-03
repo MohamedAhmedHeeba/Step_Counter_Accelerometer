@@ -1,6 +1,5 @@
 package com.example.mohamed.accelerometer;
 
-import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -10,34 +9,21 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 import android.view.View;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.lang.Object;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
 
 
     private TextView acceleration;
     private TextView steps;
-    private TextView steps2;
+    private Button show;
 
-
-
-    private double mean;
     private SensorManager sm;
     private Sensor accelerometer;
-    private boolean mInitialized; // used for initializing sensor only once
 
-    private final float NOISE = (float) 2.0;
-    private int stepsCount = 0;
-
-    private double mLastX;
-    private double mLastY;
-    private double mLastZ;
     private List<Double> list;
-    private Button show;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,55 +32,53 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         acceleration = (TextView) findViewById(R.id.Acceleration);
         steps = (TextView) findViewById(R.id.Steps);
-        steps2 = (TextView) findViewById(R.id.steps2);
-
+        show = (Button)findViewById(R.id.show);
 
         // Initialize Accelerometer sensor
-        mInitialized = false;
         sm = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         sm.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        this.list = new ArrayList<Double>();
-        this.show = (Button)findViewById(R.id.button);
-        this.show.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View v) {
-                // Do something in response to button click
-                findMean();
-                steps2.setText("#Steps: "+ finAllPeaks(devation()));
 
+        list = new ArrayList<Double>();
+
+
+        show.setOnClickListener(new View.OnClickListener(){
+
+            public void onClick(View v) {
+
+                StatisticsUtil su = new StatisticsUtil();
+                double mean = su.findMean(list);
+                double std = su.standardDeviation(list, mean);
+                int stepsNumber = su.finAllPeaks(list, std);
+                steps.setText("#Steps: "+stepsNumber);
             }
+
         });
     }
 
-    private void findMean(){
-        double total = 0;
 
-        for(int i = 0; i < this.list.size(); i++){
-            total += this.list.get(i); // this is the calculation for summing up all the values
-
-        }
-
-        mean = total / this.list.size();
-
-
-    }
-
-    private double devation(){
-        double sum = 0;
-        for(int i = 0 ; i < this.list.size() ; i++){
-            this.list.set(i, Math.pow(this.list.get(i) - mean, 2));
-            sum += this.list.get(i);
-        }
-        return Math.sqrt(sum/this.list.size());
-
-
-    }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        acceleration.setText("X: "+event.values[0]+"\nY: "+event.values[1]+"\nZ: "+event.values[2]);
+        double x = event.values[0];
+        double y = event.values[1];
+        double z = event.values[2];
+        acceleration.setText("X: "+x+"\nY: "+y+"\nZ: "+z);
+        double mag = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)+Math.pow(y, 2));
+        list.add(mag);
+    }
 
-        // event object contains values of acceleration, read those
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+}
+
+/**
+ * another method to count steps dynamically.
+ * */
+/*
+ // event object contains values of acceleration, read those
         double x;
         double y;
         double z;
@@ -161,57 +145,4 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 // no shake detected
             }
         }
-
-
-        acceleration.setText("X: "+event.values[0]+"\nY: "+event.values[1]+"\nZ: "+event.values[2]);
-        double mag = Math.sqrt(Math.pow(event.values[0], 2) + Math.pow(event.values[1], 2)
-        + Math.pow(event.values[2], 2));
-        list.add(mag);
-
-    }
-
-    private int finAllPeaks(double minPeak){
-        int counter = 0;
-        for(int i = 0 ; i < this.list.size() ; i++){
-            if(i + 2 < this.list.size()){
-                double one = this.list.get(i), two = this.list.get(i+1), three = this.list.get(i+2);
-                if(one < two && two > three && two > minPeak){
-                    counter++;
-                }
-            }
-        }
-        return counter;
-    }
-    private int findPeakUtil(int arr[], int low, int high, int n)
-    {
-        // Find index of middle element
-        int mid = low + (high - low)/2;  /* (low + high)/2 */
-
-        // Compare middle element with its neighbours (if neighbours
-        // exist)
-        if ((mid == 0 || arr[mid-1] <= arr[mid]) && (mid == n-1 ||
-                arr[mid+1] <= arr[mid]))
-            return mid;
-
-            // If middle element is not peak and its left neighbor is
-            // greater than it,then left half must have a peak element
-        else if (mid > 0 && arr[mid-1] > arr[mid])
-            return findPeakUtil(arr, low, (mid -1), n);
-
-            // If middle element is not peak and its right neighbor
-            // is greater than it, then right half must have a peak
-            // element
-        else return findPeakUtil(arr, (mid + 1), high, n);
-    }
-
-    // A wrapper over recursive function findPeakUtil()
-    private int findPeak(int arr[], int n)
-    {
-        return findPeakUtil(arr, 0, n-1, n);
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
-}
+*/
